@@ -1,0 +1,14 @@
+const express = require("express");
+
+const {
+    getVitals,
+    receiveVitals
+} = require("../controllers/vitalsController");
+
+const router = express.Router();
+
+router.get("/", getVitals);
+
+router.post("/", receiveVitals);
+
+module.exports = router;
