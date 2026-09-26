@@ -47,20 +47,20 @@ class _AuditLogScreenState extends State<AuditLogScreen> {
               elevation: 0,
               color: const Color(0xFF0F172A),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Color(0xFF1E293B))),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
+              child: const Padding(
+                padding: EdgeInsets.all(14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
                         Icon(Icons.shield_rounded, color: Colors.purpleAccent, size: 24),
                         SizedBox(width: 8),
                         Text('HIPAA & COMPLIANCE AUDIT VAULT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    const Text('Immutable log per photo: consent status, EMT sender, recipient hospital, view timestamps, & auto-expiry events.', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    SizedBox(height: 6),
+                    Text('Immutable log per photo: consent status, EMT sender, recipient hospital, view timestamps, & auto-expiry events.', style: TextStyle(fontSize: 10, color: Colors.grey)),
                   ],
                 ),
               ),

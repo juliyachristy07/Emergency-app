@@ -75,7 +75,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
     }
   }
 
-  void _showPhotoStreamDialog(BuildContext context, PhotoRecord photo) async {
+  void _showPhotoStreamDialog(PhotoRecord photo) async {
     // Invoke stream endpoint to log VIEWED audit event
     final streamRes = await ApiService.streamPhoto(photo.photoId);
     if (!mounted) return;
@@ -347,7 +347,7 @@ class _HospitalDashboardScreenState extends State<HospitalDashboardScreen> {
                                   runSpacing: 8,
                                   children: req.photos.map((p) {
                                     return GestureDetector(
-                                      onTap: () => _showPhotoStreamDialog(context, p),
+                                      onTap: () => _showPhotoStreamDialog(p),
                                       child: Container(
                                         width: 140,
                                         padding: const EdgeInsets.all(8),

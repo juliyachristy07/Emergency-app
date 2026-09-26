@@ -1,3 +1,5 @@
+library consent_state_machine;
+
 /// Consent State Machine Implementation in Dart
 /// State Machine Lifecycle:
 /// pending -> patient_consented | implied_emergency_consent | declined
