@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/photo_model.dart';
+import '../models/request_payload_model.dart';
+import '../models/audit_log_model.dart';
 
 class ApiService {
-  // Base URL configuration (Supports localhost, Android emulator 10.0.2.2, or custom host)
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:3001/api';
     if (defaultTargetPlatform == TargetPlatform.android) {
@@ -20,6 +21,20 @@ class ApiService {
     } catch (e) {
       return {'status': 'offline', 'error': e.toString()};
     }
+  }
+
+  static Future<List<HospitalRequestPayload>> fetchRequests() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/requests'));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final list = (data['requests'] as List? ?? []);
+        return list.map((r) => HospitalRequestPayload.fromJson(r)).toList();
+      }
+    } catch (e) {
+      debugPrint('Error fetching requests: $e');
+    }
+    return [];
   }
 
   static Future<List<PhotoRecord>> fetchPhotos(String requestId) async {
@@ -139,5 +154,77 @@ class ApiService {
     } catch (e) {
       return {'success': false, 'error': e.toString()};
     }
+  }
+
+  static Future<Map<String, dynamic>> streamPhoto(String photoId, {String viewerId = 'HOSP-CENTRAL-ER'}) async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/photos/$photoId/stream?viewerId=$viewerId'));
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body);
+      } else {
+        return {'success': false, 'error': 'Access Revoked (HTTP ${res.statusCode})'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> handleHospitalAction({
+    required String requestId,
+    required String action,
+    String hospitalId = 'HOSP-CENTRAL-ER',
+  }) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$baseUrl/requests/$requestId/action'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'action': action,
+          'hospitalId': hospitalId,
+        }),
+      );
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  static Future<List<AuditLogEntry>> fetchAuditLogs({
+    String? photoId,
+    String? requestId,
+    String? consentStatus,
+    String? eventType,
+  }) async {
+    try {
+      final queryParams = <String, String>{};
+      if (photoId != null && photoId.isNotEmpty) queryParams['photoId'] = photoId;
+      if (requestId != null && requestId.isNotEmpty) queryParams['requestId'] = requestId;
+      if (consentStatus != null && consentStatus.isNotEmpty) queryParams['consentStatus'] = consentStatus;
+      if (eventType != null && eventType.isNotEmpty) queryParams['eventType'] = eventType;
+
+      final uri = Uri.parse('$baseUrl/audit/logs').replace(queryParameters: queryParams);
+      final res = await http.get(uri);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final list = (data['logs'] as List? ?? []);
+        return list.map((l) => AuditLogEntry.fromJson(l)).toList();
+      }
+    } catch (e) {
+      debugPrint('Error fetching audit logs: $e');
+    }
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> fetchSchemas() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/audit/schemas'));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        return data['schemas'] as Map<String, dynamic>? ?? {};
+      }
+    } catch (e) {
+      debugPrint('Error fetching schemas: $e');
+    }
+    return {};
   }
 }
