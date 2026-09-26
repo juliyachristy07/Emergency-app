@@ -2,119 +2,134 @@
 
 **Person B's Hospital Coordination Module (Ambulance-to-Hospital Handoff Protocol)**
 
-The **Consent & Photo-Sharing Module** enables EMTs in the field to share patient photos (injury site, vitals monitor screenshots, identification cards, and incident scenes) with receiving hospital triage teams prior to ambulance arrival. Every photo transmission is consent-gated, auditable, and compliant with HIPAA minimal necessary sharing guidelines.
+The **Emergence Module B Architecture** pairs a **Flutter Mobile App for EMTs** in ambulances with a **React Web Command Dashboard for Receiving Hospital Triage Teams**, linked by a real-time consent-gated Express API server.
 
 ---
 
-## 🌟 Key Features
+## 📱 Mobile (Flutter) vs Desktop Web Architecture
 
-1. **Capture & Category Tagging**:
-   - Live camera capture simulation and custom image file uploader.
-   - Standardized medical category tagging (`injury` | `vitals` | `identification` | `scene`).
-   - Auto-timestamp recorded upon media creation.
-
-2. **Consent State Machine**:
-   - **States**: `pending` -> `patient_consented` | `implied_emergency_consent` | `declined`.
-   - **Implied Emergency Consent (Override)**: Permitted for unconscious or incapacitated patients. Requires mandatory clinical justification input (e.g., `"Patient unconscious post head trauma, GCS 8"`) and is visually flagged across all dashboards.
-   - Full audit tracking for every state transition logging EMT ID, timestamp, prior state, target state, and justification.
-
-3. **Minimal Necessary Sharing**:
-   - Pre-send deselection grid allowing EMTs to exclude specific photos before dispatch.
-   - Transmits only approved photos matching active transfer requirements.
-
-4. **Hospital Dashboard Inline Integration**:
-   - Renders photos inline with incoming requests without disrupting existing accept/decline/timeout UI.
-   - Interactive photo stream modal logging viewer timestamp events.
-   - 45-second decision countdown timer and real-time triage status updates.
-
-5. **Auto-Expiry Access Control**:
-   - Hospital photo access automatically revokes (`accessActive: false`) when a case closes (Accept) or is reassigned to another facility.
-   - Subsequent view attempts yield `HTTP 403 Access Revoked`.
-
-6. **Fallback Mode**:
-   - If consent is `declined`, zero photos transmit. Structured clinical vitals and text assessment continue through standard triage escalation logic.
-
-7. **HIPAA Audit Vault & Schema Documentation**:
-   - Immutable audit trail queryable by Photo ID, Request ID, Consent Status, Event Type, and Date Range.
-   - Export audit logs to JSON format.
-   - Exposes JSON Schemas for `ConsentObject`, `PhotoMetadata`, `HospitalRequestPayload`, and `AuditLogEntry`.
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js (v18+)
-- npm
-
-### Installation
-```bash
-# Install dependencies
-npm install
+```
+                               ┌──────────────────────────────────────────┐
+                               │     EMT Smartphone / Mobile Tablet       │
+                               │        (Flutter / Dart Mobile App)       │
+                               └────────────────────┬─────────────────────┘
+                                                    │
+                                   Field Media & Consent Decision API
+                                                    │
+                                                    ▼
+                               ┌──────────────────────────────────────────┐
+                               │   Express Backend API & HIPAA Audit Log  │
+                               │             (Node.js Server)             │
+                               └────────────────────┬─────────────────────┘
+                                                    │
+                                  Triage Sync & Auto-Expiry Access Control
+                                                    │
+                                                    ▼
+                               ┌──────────────────────────────────────────┐
+                               │     Hospital Triage Command Center       │
+                               │        (React / Vite Web Dashboard)      │
+                               └──────────────────────────────────────────┘
 ```
 
-### Running Locally
-```bash
-# Start backend server (Port 3001)
-npm run server
+---
 
-# Start frontend application (Port 3000)
+## 🌟 Features
+
+### 🚑 EMT Mobile App (Flutter / Dart)
+- **Field Photo Capture**: Instant preset capture & camera uploader for `injury`, `vitals`, `identification`, and `scene` photos.
+- **Consent State Machine Controls**:
+  - `Patient Consented` (Explicit verbal/written consent)
+  - `Implied Emergency Consent` (Emergency override for unconscious/incapacitated patients with mandatory clinical justification input)
+  - `Declined` (Triggers fallback mode)
+- **Minimal Necessary Sharing**: Multi-select toggle grid to deselect specific photos before dispatch.
+- **Backend API Synchronization**: Transmits structured request payload with attached consent-gated photos.
+
+### 🏥 Hospital Triage Command Dashboard (React / Vite Web)
+- **Inline Photo Rendering**: Displays consent-approved photos inline with incoming requests without breaking accept/decline/timeout/reassign UI.
+- **Emergency Override Visual Flags**: Prominent amber warning badges and justification banners for implied consent overrides.
+- **Auto-Expiry Access Control**: Photo access automatically revokes (`HTTP 403`) when a case is accepted or reassigned.
+- **Text-Only Fallback**: If consent is declined, zero photos transmit; structured vitals and text assessment proceed through triage escalation.
+- **HIPAA Audit Trail Vault**: Searchable, queryable immutable audit log with JSON export and JSON Schema viewer.
+
+---
+
+## 🚀 Running the System
+
+### 1. Start Backend API Server
+```bash
+node server/index.js
+# Backend running on http://localhost:3001
+```
+
+### 2. Start Hospital Web Dashboard (React)
+```bash
 npm run dev
+# Dashboard running on http://localhost:3000
 ```
 
-### Running Unit Tests
+### 3. Run EMT Mobile App (Flutter)
 ```bash
-# Run Vitest suite
+cd emt_mobile_app
+
+# Run on Chrome/Web
+flutter run -d chrome
+
+# Run on Windows Desktop
+flutter run -d windows
+
+# Build Mobile Web Bundle
+flutter build web
+```
+
+### 4. Run Unit Tests
+```bash
+# Backend State Machine Vitest Suite
 npm run test
-```
 
-### Production Build
-```bash
-# Build Vite production bundle
-npm run build
+# Flutter App Dart Analyzer
+cd emt_mobile_app
+dart analyze lib/main.dart
 ```
 
 ---
 
-## 📂 Project Architecture
+## 📂 Repository Structure
 
 ```
 Emergence-app/
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-├── postcss.config.js
-├── index.html
-├── src/
-│   ├── main.jsx
-│   ├── App.jsx
-│   ├── index.css
-│   ├── components/
-│   │   ├── EmtModule.jsx            # EMT photo capture, tagging & consent state machine panel
-│   │   ├── HospitalDashboard.jsx    # Hospital triage dashboard, accept/decline & auto-expiry
-│   │   ├── AuditPortal.jsx          # Compliance audit trail & query interface
-│   │   ├── SchemaViewer.jsx         # Live JSON schemas specification viewer
-│   │   ├── PhotoModal.jsx           # Photo stream modal with view audit logging
-│   │   └── ConsentBadge.jsx         # Emergency override visual badges
-│   ├── services/
-│   │   └── api.js                   # API service connector
-│   └── state/
-│       └── ConsentStateMachine.js   # Client consent state machine definitions
+├── package.json                     # Node server & React web configuration
+├── vite.config.js                   # Vite dev server with proxy to backend
 ├── server/
-│   ├── index.js                     # Express server setup
+│   ├── index.js                     # Express API server entrypoint
 │   ├── models/
-│   │   ├── ConsentStateMachine.js   # Core state machine logic & transition rules
+│   │   ├── ConsentStateMachine.js   # Consent lifecycle & transition rules
 │   │   ├── AuditLog.js              # Immutable audit trail logger
-│   │   └── Store.js                 # In-memory database & auto-expiry hooks
+│   │   └── Store.js                 # Database store & auto-expiry hooks
 │   ├── routes/
 │   │   ├── photos.js                # Upload, tag, stream & access revocation
-│   │   ├── consent.js               # Consent state update endpoint
-│   │   ├── requests.js              # Request transmission & hospital decision logic
-│   │   └── audit.js                 # Audit log search & JSON schema delivery
+│   │   ├── consent.js               # Consent update endpoint
+│   │   ├── requests.js              # Handoff request payload transmission
+│   │   └── audit.js                 # Compliance log query interface
 │   └── schemas/
-│       └── consentSchemas.js        # JSON Schemas for consent & request payload
+│       └── consentSchemas.js        # JSON Schemas specification
+├── src/                             # Hospital Command Web Dashboard (React)
+│   ├── components/
+│   │   ├── EmtModule.jsx            # EMT web station view
+│   │   ├── HospitalDashboard.jsx    # Hospital triage dashboard
+│   │   ├── AuditPortal.jsx          # HIPAA compliance audit vault
+│   │   ├── SchemaViewer.jsx         # JSON Schemas viewer
+│   │   ├── PhotoModal.jsx           # Photo stream modal with view audit logging
+│   │   └── ConsentBadge.jsx         # Emergency override visual badges
+│   └── services/
+│       └── api.js                   # Web API service
+├── emt_mobile_app/                  # EMT Mobile Application (Flutter / Dart)
+│   ├── pubspec.yaml                 # Flutter packages configuration
+│   └── lib/
+│       ├── main.dart                # Flutter Mobile App UI & State Control
+│       ├── models/                  # Dart models (Consent, Photo, Payload)
+│       └── services/                # HTTP API Client for Node server
 └── tests/
-    └── consentStateMachine.test.js  # Vitest unit tests for state machine
+    └── consentStateMachine.test.js  # Vitest state machine unit tests
 ```
 
 ---
