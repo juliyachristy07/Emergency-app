@@ -5,6 +5,7 @@ import {
   Radio,
   Clock,
   ShieldAlert,
+  CheckCircle2,
 } from 'lucide-react';
 import type {
   PatientData,
@@ -64,6 +65,15 @@ export const TriageDashboard: React.FC = () => {
     )
   );
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
+  const [updateNotification, setUpdateNotification] = useState<string | null>(null);
+
+  // Auto clear notification after 4s
+  useEffect(() => {
+    if (updateNotification) {
+      const timer = setTimeout(() => setUpdateNotification(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [updateNotification]);
 
   // Function for manual refresh
   const handleManualRefresh = async () => {
@@ -136,6 +146,15 @@ export const TriageDashboard: React.FC = () => {
         triageInput
       );
       setTriageResult(updatedScore);
+      setUpdateNotification(
+        `Vitals synced to API! Recalculated triage priority: ${updatedScore.urgencyLevel} (Score: ${updatedScore.totalScore}/${updatedScore.maxPossibleScore})`
+      );
+
+      // Scroll to result
+      const resultElement = document.getElementById('triage-result');
+      if (resultElement) {
+        resultElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
         setApiError(`Failed to update vitals: ${err.message}`);
@@ -157,11 +176,30 @@ export const TriageDashboard: React.FC = () => {
       );
       setTriageResult(result);
       setIsCalculating(false);
+      setUpdateNotification(
+        `Triage score updated: ${result.urgencyLevel} Priority (Score: ${result.totalScore}/${result.maxPossibleScore})`
+      );
+
+      // Smoothly scroll down so the result card is front and center
+      const resultElement = document.getElementById('triage-result');
+      if (resultElement) {
+        resultElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }, 200);
   };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-blue-600 selection:text-white">
+      {/* Floating Status Notification Toast */}
+      {updateNotification && (
+        <div className="fixed top-20 right-4 sm:right-8 z-50 bg-blue-600 border border-blue-400 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-bounce">
+          <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold tracking-wide">
+            {updateNotification}
+          </span>
+        </div>
+      )}
+
       {/* Top Navigation / Telemetry Header */}
       <header className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30 px-4 sm:px-8 py-3.5">
         <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-3">

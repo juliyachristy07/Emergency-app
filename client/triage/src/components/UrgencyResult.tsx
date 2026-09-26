@@ -84,7 +84,8 @@ export const UrgencyResult: React.FC<UrgencyResultProps> = ({ result }) => {
 
   return (
     <div
-      className={`bg-slate-900 border ${config.border} rounded-2xl p-6 shadow-xl relative overflow-hidden transition-all duration-300`}
+      id="triage-result"
+      className={`bg-slate-900 border ${config.border} rounded-2xl p-6 shadow-xl relative overflow-hidden transition-all duration-300 ring-2 ring-blue-500/50`}
     >
       {/* Top accent light based on urgency */}
       <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${config.accent}`} />
